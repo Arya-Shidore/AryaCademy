@@ -38,6 +38,7 @@ const ProblemsTable: React.FC<ProblemsTableProps> = ({ setLoadingProblems }) => 
 		<>
 			<tbody className='text-white'>
 				{problems.map((problem, idx) => {
+					console.log("problems !!!", problem);
 					const difficulyColor =
 						problem.difficulty === "Easy"
 							? "text-dark-green-s"
@@ -123,6 +124,8 @@ function useGetProblems(setLoadingProblems: React.Dispatch<React.SetStateAction<
 			// fetching data logic
 			setLoadingProblems(true);
 			const q = query(collection(firestore, "problems"), orderBy("order", "asc"));
+			// print q
+			console.log("q !!!", q);
 			const querySnapshot = await getDocs(q);
 			const tmp: DBProblem[] = [];
 			querySnapshot.forEach((doc) => {

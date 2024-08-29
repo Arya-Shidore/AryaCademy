@@ -15,7 +15,7 @@ AryaCode is live and accessible here: [AryaCode Deployment](https://arya-cademy.
 
 ## Screenshot
 
-(![alt text](image.png))
+![alt text](image.png)
 
 ## Getting Started
 

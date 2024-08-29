@@ -1,4 +1,3 @@
-import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { BsCheckCircle } from "react-icons/bs";
 import { AiFillYoutube } from "react-icons/ai";
@@ -8,6 +7,7 @@ import { collection, doc, getDoc, getDocs, orderBy, query } from "firebase/fires
 import { auth, firestore } from "@/firebase/firebase";
 import { DBProblem } from "@/utils/types/problem";
 import { useAuthState } from "react-firebase-hooks/auth";
+import Link from "next/link";
 
 type ProblemsTableProps = {
 	setLoadingProblems: React.Dispatch<React.SetStateAction<boolean>>;
@@ -18,9 +18,21 @@ const ProblemsTable: React.FC<ProblemsTableProps> = ({ setLoadingProblems }) => 
 		isOpen: false,
 		videoId: "",
 	});
+	const [currentPage, setCurrentPage] = useState(1);
+	const problemsPerPage = 7;
+
 	const problems = useGetProblems(setLoadingProblems);
 	const solvedProblems = useGetSolvedProblems();
-	console.log("solvedProblems", solvedProblems);
+
+	// Calculate the number of pages
+	const totalPages = Math.ceil(problems.length / problemsPerPage);
+
+	// Get the problems for the current page
+	const currentProblems = problems.slice(
+		(currentPage - 1) * problemsPerPage,
+		currentPage * problemsPerPage
+	);
+
 	const closeModal = () => {
 		setYoutubePlayer({ isOpen: false, videoId: "" });
 	};
@@ -37,14 +49,14 @@ const ProblemsTable: React.FC<ProblemsTableProps> = ({ setLoadingProblems }) => 
 	return (
 		<>
 			<tbody className='text-white'>
-				{problems.map((problem, idx) => {
-					console.log("problems !!!", problem);
+				{currentProblems.map((problem, idx) => {
 					const difficulyColor =
 						problem.difficulty === "Easy"
 							? "text-dark-green-s"
 							: problem.difficulty === "Medium"
 							? "text-dark-yellow"
 							: "text-dark-pink";
+
 					return (
 						<tr className={`${idx % 2 == 1 ? "bg-dark-layer-1" : ""}`} key={problem.id}>
 							<th className='px-2 py-4 font-medium whitespace-nowrap text-dark-green-s'>
@@ -87,6 +99,7 @@ const ProblemsTable: React.FC<ProblemsTableProps> = ({ setLoadingProblems }) => 
 					);
 				})}
 			</tbody>
+
 			{youtubePlayer.isOpen && (
 				<tfoot className='fixed top-0 left-0 h-screen w-screen flex items-center justify-center'>
 					<div
@@ -111,6 +124,29 @@ const ProblemsTable: React.FC<ProblemsTableProps> = ({ setLoadingProblems }) => 
 					</div>
 				</tfoot>
 			)}
+
+			{/* Pagination Controls */}
+			<div className="flex justify-between items-center mt-4">
+				<button
+					disabled={currentPage === 1}
+					onClick={() => setCurrentPage((prev) => prev - 1)}
+					className="text-white bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-2 rounded-lg shadow-md transform transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					Previous
+				</button>
+				<span className="text-white font-semibold">
+					Page {currentPage} of {totalPages}
+				</span>
+				<div className="flex-1 text-right">
+					<button
+						disabled={currentPage === totalPages}
+						onClick={() => setCurrentPage((prev) => prev + 1)}
+						className="text-white bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-2 rounded-lg shadow-md transform transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						Next
+					</button>
+				</div>
+			</div>
 		</>
 	);
 };
@@ -121,11 +157,8 @@ function useGetProblems(setLoadingProblems: React.Dispatch<React.SetStateAction<
 
 	useEffect(() => {
 		const getProblems = async () => {
-			// fetching data logic
 			setLoadingProblems(true);
 			const q = query(collection(firestore, "problems"), orderBy("order", "asc"));
-			// print q
-			console.log("q !!!", q);
 			const querySnapshot = await getDocs(q);
 			const tmp: DBProblem[] = [];
 			querySnapshot.forEach((doc) => {
